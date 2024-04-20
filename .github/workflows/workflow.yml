@@ -58,7 +58,7 @@ jobs:
         pip install -r requirements.txt
     - name: Type check with mypy
       run: |
-        pip install mypy
+        pip install mypy pytest
         mypy test.py pbc_distance_calculator/
 
   # Lint with pylint
@@ -83,7 +83,7 @@ jobs:
         pip install -r requirements.txt
     - name: Type check with mypy
       run: |
-        pip install pylint
+        pip install pylint pytest
         pylint test.py pbc_distance_calculator/
 
   # Publish code to PyPI
