@@ -89,6 +89,7 @@ jobs:
   # Publish code to PyPI
   deploy:
 
+    needs: pylint
     runs-on: ubuntu-latest
 
     steps:
