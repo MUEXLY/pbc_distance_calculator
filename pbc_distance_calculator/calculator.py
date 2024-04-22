@@ -31,7 +31,7 @@ def get_pairwise_distances(positions: NDArray, cell_matrix: NDArray) -> NDArray:
     images = np.einsum("km,ijm->ijk", cell_matrix, np.round(fractional_differences))
 
     # subtract off the images to get the minimum image differences
-    differences = positions[:, None] - positions - images
+    differences = differences - images
     minimum_image_distances = np.linalg.norm(differences, axis=2)
 
     return minimum_image_distances
