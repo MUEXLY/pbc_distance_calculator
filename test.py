@@ -3,7 +3,7 @@ script for testing the pairwise distance calculation
 """
 
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from copy import deepcopy
 
 import pytest
@@ -24,7 +24,7 @@ class CoordinationNumberTestingContainer:
     dimensions: NDArray
     cutoffs: NDArray
     target_coordination_numbers: NDArray
-    unit_cell: NDArray = np.eye(3)
+    unit_cell: NDArray = field(default_factory=np.eye(3))
 
     @property
     def cell_matrix(self) -> NDArray:
