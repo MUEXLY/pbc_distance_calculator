@@ -46,7 +46,7 @@ def get_pairwise_distance(difference: NDArray, cell_matrix: NDArray) -> float:
     function for computing pairwise distance
     """
 
-    assert difference.shape == (1, 3) or difference.shape == (3,)
+    assert difference.shape in {(1, 3), (3, )}
     assert cell_matrix.shape == (3, 3)
 
     inverted_cell_matrix = np.linalg.inv(cell_matrix)
