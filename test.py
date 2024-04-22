@@ -13,6 +13,15 @@ from numpy.typing import NDArray
 from pbc_distance_calculator import get_pairwise_distances, get_pairwise_distance
 
 
+def get_default_unit_cell() -> NDArray:
+
+    """
+    default unit cell with lattice parameters 1 and angles 90 degrees
+    """
+
+    return np.eye(3)
+
+
 @dataclass
 class CoordinationNumberTestingContainer:
 
@@ -24,7 +33,7 @@ class CoordinationNumberTestingContainer:
     dimensions: NDArray
     cutoffs: NDArray
     target_coordination_numbers: NDArray
-    unit_cell: NDArray = field(default_factory=np.eye(3))
+    unit_cell: NDArray = field(default_factory=get_default_unit_cell)
 
     @property
     def cell_matrix(self) -> NDArray:
