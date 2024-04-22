@@ -13,6 +13,9 @@ def get_pairwise_distances(positions: NDArray, cell_matrix: NDArray) -> NDArray:
     function for computing pairwise distances
     """
 
+    assert positions.shape[1] == 3
+    assert cell_matrix.shape == (3, 3)
+
     # first, invert cell matrix
     inverted_cell_matrix = np.linalg.inv(cell_matrix)
 
@@ -35,3 +38,20 @@ def get_pairwise_distances(positions: NDArray, cell_matrix: NDArray) -> NDArray:
     minimum_image_distances = np.linalg.norm(differences, axis=2)
 
     return minimum_image_distances
+
+
+def get_pairwise_distance(difference: NDArray, cell_matrix: NDArray) -> float:
+
+    """
+    function for computing pairwise distance
+    """
+
+    assert difference.shape == (1, 3) or difference.shape == (3,)
+    assert cell_matrix.shape == (3, 3)
+
+    inverted_cell_matrix = np.linalg.inv(cell_matrix)
+    fractional_difference = inverted_cell_matrix @ difference
+    image = cell_matrix @ np.round(fractional_difference)
+    difference = difference - image
+
+    return float(np.linalg.norm(difference))

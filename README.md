@@ -29,7 +29,24 @@ cell_matrix: NDArray = ...
 pairwise_distances: NDArray = get_pairwise_distances(positions, cell_matrix)
 ```
 
-The cell matrix, is, in general:
+The above script performs the calculation in a vectorized form, computing every pairwise distance at once. To do it serially instead:
+
+```python
+from numpy.typing import NDArray
+from pbc_distance_calculator import get_pairwise_distance
+
+# arrays of shape (1, 3) or (3, 1)
+first_position: NDArray = ...
+second_position: NDArray = ...
+
+# array of shape (3, 3)
+cell_matrix: NDArray = ...
+
+# minimum image distance
+pairwise_distances: float = get_pairwise_distance(first_position - second_position, cell_matrix)
+```
+
+Note that the cell matrix, is, in general:
 
 $$
 \begin{pmatrix} \mathbf{a} & \mathbf{b} & \mathbf{c} \end{pmatrix}
