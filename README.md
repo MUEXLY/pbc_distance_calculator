@@ -43,10 +43,13 @@ second_position: NDArray = ...
 cell_matrix: NDArray = ...
 
 # minimum image distance
-pairwise_distances: float = get_pairwise_distance(first_position - second_position, cell_matrix)
+pairwise_distance: float = get_pairwise_distance(
+    first_position - second_position,
+    cell_matrix
+)
 ```
 
-In both functions, you can also specify different engines to compute the distances. This is especially advantageous for large systems, where you can specify ``jax`` or ``torch`` as an engine. For example:
+In both functions, you can also specify different engines to compute the distances. This is especially advantageous for large systems, where you can specify ``jax.numpy`` or ``torch`` as an engine. For example:
 
 ```python
 import torch
@@ -55,7 +58,11 @@ from pbc_distance_calculator import get_pairwise_distances
 ...
 
 torch.set_default_device("cuda")
-pairwise_distances = get_pairwise_distances(positions, cell_matrix, engine=torch)
+pairwise_distances = get_pairwise_distances(
+    positions,
+    cell_matrix,
+    engine=torch
+)
 ```
 
 which will calculate the pairwise distances using the CUDA-backend of PyTorch. Note that the only engine installed by default is ``numpy``, so make sure to separately install ``jax`` or ``torch`` if you want to use these modules.
@@ -66,4 +73,4 @@ $$
 \begin{pmatrix} \mathbf{a} & \mathbf{b} & \mathbf{c} \end{pmatrix}
 $$
 
-where $\mathbf{a}$, $\mathbf{b}$, and $\mathbf{c}$ are the lattice vectors of the supercell. Note that this definition works for any set of lattice parameters! So, no matter how weird your crystal, this package should work. If there are any issues, feel free to open an issue 🙂.
+where $\mathbf{a}$, $\mathbf{b}$, and $\mathbf{c}$ are the lattice vectors of the supercell. Note that this definition works for any set of lattice parameters! So, no matter how weird your crystal, this package should work. If there are any problems, feel free to [open an issue](https://github.com/MUEXLY/pbc_distance_calculator/issues) 🙂.
