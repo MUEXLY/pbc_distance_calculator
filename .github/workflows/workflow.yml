@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -31,6 +31,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install jax jaxlib torch
     - name: Test with pytest
       run: |
         pip install pytest
@@ -44,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -59,6 +60,7 @@ jobs:
     - name: Type check with mypy
       run: |
         pip install mypy pytest
+        pip install jax jaxlib torch
         mypy test.py pbc_distance_calculator/
 
   # Lint with pylint
@@ -69,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -84,6 +86,7 @@ jobs:
     - name: Type check with mypy
       run: |
         pip install pylint pytest
+        pip install jax jaxlib torch
         pylint test.py pbc_distance_calculator/
 
   # Publish code to PyPI

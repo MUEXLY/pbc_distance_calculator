@@ -1,6 +1,6 @@
 # pbc_distance_calculator
 
-![](https://img.shields.io/badge/python-3.8--3.12-blue?logo=python&logoColor=white&labelColor=blue&color=grey)
+![](https://img.shields.io/badge/python-3.9--3.12-blue?logo=python&logoColor=white&labelColor=blue&color=grey)
 
 This Python package computes pairwise distances in a simulation box accounting for [periodic boundary conditions](https://en.wikipedia.org/wiki/Periodic_boundary_conditions).
 
@@ -45,6 +45,20 @@ cell_matrix: NDArray = ...
 # minimum image distance
 pairwise_distances: float = get_pairwise_distance(first_position - second_position, cell_matrix)
 ```
+
+In both functions, you can also specify different engines to compute the distances. This is especially advantageous for large systems, where you can specify ``jax`` or ``torch`` as an engine. For example:
+
+```python
+import torch
+from pbc_distance_calculator import get_pairwise_distances
+
+...
+
+torch.set_default_device("cuda")
+pairwise_distances = get_pairwise_distances(positions, cell_matrix, engine=torch)
+```
+
+which will calculate the pairwise distances using the CUDA-backend of PyTorch. Note that the only engine installed by default is ``numpy``, so make sure to separately install ``jax`` or ``torch`` if you want to use these modules.
 
 Note that the cell matrix, is, in general:
 

@@ -5,12 +5,21 @@ script for testing the pairwise distance calculation
 
 from dataclasses import dataclass, field
 from copy import deepcopy
+from importlib import import_module
+from types import ModuleType
+from typing import Callable
+from itertools import product
+from contextlib import nullcontext
 
 import pytest
-import numpy as np
 from numpy.typing import NDArray
 
 from pbc_distance_calculator import get_pairwise_distances, get_pairwise_distance
+
+
+np = import_module("numpy")
+torch = import_module("torch")
+jax = import_module("jax.numpy")
 
 
 def get_default_unit_cell() -> NDArray:
@@ -78,13 +87,15 @@ class CoordinationNumberTestingContainer:
 
         return site_positions
 
-    def get_pairwise_distances(self) -> NDArray:
+    def get_pairwise_distances(self, engine: ModuleType) -> NDArray:
 
         """
         function for getting the sites and cell matrix for a supercell
         """
 
-        return get_pairwise_distances(self.site_positions, self.cell_matrix)
+        return get_pairwise_distances(
+            self.site_positions, self.cell_matrix, engine=engine
+        )
 
 
 def cartesian_product(*arrays):
@@ -136,15 +147,21 @@ SC_SMALL = deepcopy(SC)
 SC_SMALL.dimensions = np.array([4, 4, 2])
 
 
+TEST_PARAMETERS = list(product((FCC, BCC, SC), (np, torch, jax)))
+
+
 # perform tests
-@pytest.mark.parametrize("container", (FCC, BCC, SC))
-def test_coordination_numbers(container: CoordinationNumberTestingContainer):
+@pytest.mark.parametrize("container,engine", TEST_PARAMETERS)
+def test_coordination_numbers(
+    container: CoordinationNumberTestingContainer, engine: ModuleType
+):
 
     """
     function for performing coordination number test on a container
     """
 
-    distances = container.get_pairwise_distances()
+    distances = container.get_pairwise_distances(engine=engine)
+    assert isinstance(distances, np.ndarray)
 
     for i, coordination_number in enumerate(container.target_coordination_numbers):
 
@@ -162,19 +179,30 @@ def test_coordination_numbers(container: CoordinationNumberTestingContainer):
         assert np.isclose(coordination_number, np.mean(coordination_numbers))
 
 
-@pytest.mark.parametrize("container", (FCC_SMALL, BCC_SMALL, SC_SMALL))
-def test_serial_and_vectorized_equal(container: CoordinationNumberTestingContainer):
+TEST_PARAMETERS = list(product((FCC_SMALL, BCC_SMALL, SC_SMALL), (np, torch, jax)))
+
+
+@pytest.mark.parametrize("container,engine", TEST_PARAMETERS)
+def test_serial_and_vectorized_equal(
+    container: CoordinationNumberTestingContainer, engine: ModuleType
+):
 
     """
     function for performing test to assure that serial and vectorized calculation are the same
     """
 
-    vectorized_distances = container.get_pairwise_distances()
+    vectorized_distances = container.get_pairwise_distances(engine=engine)
+
+    if engine.__name__ == "numpy":
+        ctx: Callable = nullcontext
+    else:
+        ctx = lambda: pytest.warns(UserWarning)
 
     for i, first_site in enumerate(container.site_positions):
         for j, second_site in enumerate(container.site_positions):
 
-            distance = get_pairwise_distance(
-                first_site - second_site, container.cell_matrix
-            )
+            with ctx():
+                distance = get_pairwise_distance(
+                    first_site - second_site, container.cell_matrix, engine=engine
+                )
             assert np.isclose(vectorized_distances[i, j], distance)
