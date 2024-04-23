@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from copy import deepcopy
 from importlib import import_module
 from types import ModuleType
-from typing import Callable
 from itertools import product
 from contextlib import nullcontext
 
@@ -194,9 +193,11 @@ def test_serial_and_vectorized_equal(
     vectorized_distances = container.get_pairwise_distances(engine=engine)
 
     if engine.__name__ == "numpy":
-        ctx: Callable = nullcontext
+        def ctx():
+            return nullcontext()
     else:
-        ctx = lambda: pytest.warns(UserWarning)
+        def ctx():
+            return pytest.warns(UserWarning)
 
     for i, first_site in enumerate(container.site_positions):
         for j, second_site in enumerate(container.site_positions):
