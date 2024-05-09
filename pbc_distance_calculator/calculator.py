@@ -27,7 +27,7 @@ def private(func: Callable) -> Callable:
 
     def wrapper(*args, **kwargs):
         warnings.warn(
-            "This method is private and is subject to backwards-incompatible changes",
+            f"{func.__name__} is private and is subject to backwards-incompatible changes",
             PrivateWarning
         )
         return func(*args, **kwargs)
