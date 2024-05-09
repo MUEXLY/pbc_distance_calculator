@@ -13,12 +13,13 @@ from contextlib import nullcontext
 import pytest
 from numpy.typing import NDArray
 
-from pbc_distance_calculator import get_pairwise_distances, get_pairwise_distance
+from pbc_distance_calculator import get_pairwise_distances, get_pairwise_distance, is_valid, utils
 
 
 np = import_module("numpy")
 torch = import_module("torch")
 jax = import_module("jax.numpy")
+random = import_module("random")
 
 
 def get_default_unit_cell() -> NDArray:
@@ -207,3 +208,55 @@ def test_serial_and_vectorized_equal(
                     first_site - second_site, container.cell_matrix, engine=engine
                 )
             assert np.isclose(vectorized_distances[i, j], distance)
+
+
+ENGINE_VALIDITY = [
+    (np, True),
+    (torch, True),
+    (jax, True),
+    (random, False)
+]
+
+
+@pytest.mark.parametrize("engine,expected_result", ENGINE_VALIDITY)
+def test_engine_validity(engine: ModuleType, expected_result: bool):
+
+    """
+    test for engine validity
+    checks if necessary functions present in module  API
+    """
+
+    assert is_valid(engine) == expected_result
+
+
+@pytest.mark.filterwarnings("ignore::UserWarning")
+@pytest.mark.parametrize("engine", (np, torch, jax))
+def test_util_methods_callable(engine: ModuleType):
+
+    """
+    test to make sure util functions are accessible and callable
+    """
+
+    cell_matrix = engine.eye(3)
+    if engine.__name__ == "torch":
+        positions = engine.tensor([
+            [0.0, 0.0, 0.0],
+            [0.75, 0.75, 0.75]
+        ])
+    else:
+        positions = engine.array([
+            [0.00, 0.00, 0.00],
+            [0.75, 0.75, 0.75]
+        ])
+
+    # pylint: disable=protected-access
+    with pytest.warns(utils.PrivateWarning):
+        diff_vector = utils._get_difference_vector(
+            positions[0, :] - positions[1, :],
+            cell_matrix,
+            engine=engine
+        )
+        diff_vectors = utils._get_difference_vectors(positions, cell_matrix, engine=engine)
+
+    assert tuple(diff_vector) == (0.25, 0.25, 0.25)
+    assert engine.all(diff_vectors[0, 1, :] == diff_vector)
