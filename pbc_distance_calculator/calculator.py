@@ -18,6 +18,13 @@ class PrivateWarning(Warning):
     """
 
 
+class WasteWarning(Warning):
+
+    """
+    warning for performing wasteful call to expensive engine
+    """
+
+
 def private(func: Callable) -> Callable:
 
     """
@@ -51,8 +58,10 @@ def _get_difference_vectors(
         warnings.warn("cell matrix has shape other than (3, 3)")
 
     if engine.__name__ == "torch":
-        positions = engine.tensor(positions)
-        cell_matrix = engine.tensor(cell_matrix)
+        if not isinstance(positions, engine.Tensor):
+            positions = engine.tensor(positions)
+        if not isinstance(cell_matrix, engine.Tensor):
+            cell_matrix = engine.tensor(cell_matrix)
 
     # first, invert cell matrix
     inverted_cell_matrix = engine.linalg.inv(cell_matrix)
@@ -87,6 +96,10 @@ def get_pairwise_distances(
     function for computing pairwise distances
     """
 
+    if len(positions) == 1:
+        warnings.warn("You called get_pairwise_distances for a single position. "
+                      "Did you mean to call get_pairwise_distance instead?")
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", PrivateWarning)
         differences = _get_difference_vectors(
@@ -115,14 +128,11 @@ def _get_difference_vector(
     if dim_warn and cell_matrix.shape != (3, 3):
         warnings.warn("cell matrix has shape other than (3, 3)")
 
-    if engine.__name__ != "numpy":
-        warnings.warn(
-            f"Using {engine.__name__} here is likely a waste. Consider using numpy"
-        )
-
     if engine.__name__ == "torch":
-        difference = engine.tensor(difference)
-        cell_matrix = engine.tensor(cell_matrix)
+        if not isinstance(difference, engine.Tensor):
+            difference = engine.tensor(difference)
+        if not isinstance(cell_matrix, engine.Tensor):
+            cell_matrix = engine.tensor(cell_matrix)
     elif "jax" in engine.__name__:
         difference = engine.array(difference)
         cell_matrix = engine.array(cell_matrix)
@@ -142,6 +152,12 @@ def get_pairwise_distance(
     """
     function for computing pairwise distance
     """
+
+    if engine.__name__ != "numpy":
+        warnings.warn(
+            f"Using {engine.__name__} here is likely a waste. Consider using numpy",
+            WasteWarning
+        )
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", PrivateWarning)

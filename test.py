@@ -198,7 +198,7 @@ def test_serial_and_vectorized_equal(
             return nullcontext()
     else:
         def ctx():
-            return pytest.warns(UserWarning)
+            return pytest.warns(utils.WasteWarning)
 
     for i, first_site in enumerate(container.site_positions):
         for j, second_site in enumerate(container.site_positions):
@@ -229,7 +229,6 @@ def test_engine_validity(engine: ModuleType, expected_result: bool):
     assert is_valid(engine) == expected_result
 
 
-@pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.parametrize("engine", (np, torch, jax))
 def test_util_methods_callable(engine: ModuleType):
 
@@ -260,3 +259,22 @@ def test_util_methods_callable(engine: ModuleType):
 
     assert tuple(diff_vector) == (0.25, 0.25, 0.25)
     assert engine.all(diff_vectors[0, 1, :] == diff_vector)
+
+
+@pytest.mark.parametrize("engine", (np, torch, jax))
+def test_singlet_position_call(engine: ModuleType):
+
+    """
+    test that a singlet position call tells the user to use a different function
+    """
+
+    if engine.__name__ == "torch":
+        position = engine.tensor([[0.25, 0.25, 0.25]])
+    else:
+        position = engine.array([[0.25, 0.25, 0.25]])
+
+    cell_matrix = engine.eye(3)
+
+    with pytest.warns(UserWarning):
+        dist = get_pairwise_distances(position, cell_matrix, engine=engine)
+    assert dist[0, 0] == 0.0
