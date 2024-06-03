@@ -43,7 +43,7 @@ def unfinished(func: Callable) -> Callable:
             f"{func.__name__}'s implementation is not yet finished"
         )
         return func(*args, **kwargs)
-    
+
     return wrapper
 
 
@@ -199,17 +199,20 @@ def get_pairwise_distance(
 def get_pairwise_distance_cascade(
     positions: NDArray, cell_matrix: NDArray, engine: ModuleType, cutoff: float = np.inf
 ) -> NDArray:
-    
+
+    """
+    cascade-type algorithm for getting distances
+    work in progress
+    """
+
     if engine.__name__ != "torch":
         raise ValueError("cascade algorithm only works with PyTorch backend")
-    
+
     inverse_cell_matrix = engine.linalg.inv(cell_matrix)
 
     sampled = set()
     num_sites = len(positions)
-
-    seed = 0
-    flower = {seed}
+    flower = {0}
 
     distance_tensor = engine.zeros((num_sites, num_sites))
 
@@ -219,8 +222,9 @@ def get_pairwise_distance_cascade(
         fractional_differences = engine.einsum(
             "km,ijm->ijk", inverse_cell_matrix, differences
         )
-        images = engine.einsum("km,ijm->ijk", cell_matrix, engine.round(fractional_differences))
-        distances = engine.linalg.norm(differences - images, dim=2)
+        differences = differences \
+            - engine.einsum("km,ijm->ijk", cell_matrix, engine.round(fractional_differences))
+        distances = engine.linalg.norm(differences, dim=2)
         neighbors = ((0 < distances) & (distances < cutoff)).int()
         distances[engine.where(neighbors == 0)] = 0.0
 
