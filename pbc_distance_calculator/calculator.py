@@ -25,11 +25,32 @@ class WasteWarning(Warning):
     """
 
 
+class UnfinishedWarning(Warning):
+
+    """
+    warning for function that isn't finished yet
+    """
+
+
+def unfinished(func: Callable) -> Callable:
+
+    """
+    decorator for warning the user that a function's implementation isn't finished
+    """
+
+    def wrapper(*args, **kwargs) -> Callable:
+        warnings.warn(
+            f"{func.__name__}'s implementation is not yet finished"
+        )
+        return func(*args, **kwargs)
+    
+    return wrapper
+
+
 def private(func: Callable) -> Callable:
 
     """
     decorator for marking a function as private
-    just raises a PrivateWarning upon call
     """
 
     def wrapper(*args, **kwargs):
@@ -171,3 +192,42 @@ def get_pairwise_distance(
     if not isinstance(distance, float):
         return float(distance)
     return distance
+
+
+@unfinished
+def get_pairwise_distance_cascade(
+    positions: NDArray, cell_matrix: NDArray, engine: ModuleType, cutoff: float = np.inf
+) -> NDArray:
+    
+    if engine.__name__ != "torch":
+        raise ValueError("cascade algorithm only works with PyTorch backend")
+    
+    inverse_cell_matrix = engine.linalg.inv(cell_matrix)
+
+    sampled = set()
+    num_sites = len(positions)
+
+    seed = 0
+    flower = {seed}
+
+    distance_tensor = engine.zeros((num_sites, num_sites))
+
+    while len(sampled) < num_sites:
+
+        differences = positions.unsqueeze(0) - positions[list(flower)].unsqueeze(1)
+        fractional_differences = engine.einsum(
+            "km,ijm->ijk", inverse_cell_matrix, differences
+        )
+        images = engine.einsum("km,ijm->ijk", cell_matrix, engine.round(fractional_differences))
+        distances = engine.linalg.norm(differences - images, dim=2)
+        neighbors = ((0 < distances) & (distances < cutoff)).int()
+        distances[engine.where(neighbors == 0)] = 0.0
+
+        distance_tensor[list(flower), :] = distances[..., :]
+
+        neighbor_indices = set(map(int, engine.nonzero(neighbors)[:, 1]))
+        sampled.update(flower)
+
+        flower = neighbor_indices - sampled
+
+    return distance_tensor
