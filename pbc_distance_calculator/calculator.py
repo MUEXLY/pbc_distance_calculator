@@ -3,7 +3,7 @@ module for getting pairwise distances
 """
 
 from types import ModuleType
-from typing import Callable
+from typing import Callable, no_type_check
 import warnings
 
 
@@ -194,6 +194,7 @@ def get_pairwise_distance(
     return distance
 
 
+@no_type_check
 @unfinished
 def get_pairwise_distance_cascade(
     positions: NDArray, cell_matrix: NDArray, engine: ModuleType, cutoff: float = np.inf
